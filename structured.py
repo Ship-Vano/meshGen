@@ -3,7 +3,7 @@ from netgen.meshing import Element0D, Element1D, Element2D, MeshPoint, FaceDescr
 from netgen.csg import Pnt
 
 quads = False
-N=250
+N=500
 
 mesh = Mesh()
 mesh.SetGeometry(unit_square)
@@ -25,7 +25,7 @@ for j in range(N):
             mesh.Add(Element2D(1, [pnums[i + (j + 1) * (N + 1)], pnums[i + 1 + (j + 1) * (N + 1)], pnums[i + 1 + j * (N + 1)]]))
 
 
-
+mesh.Refine(adaptive=True)
 
 # экспорт
 filename = "mesh.txt"
@@ -41,7 +41,7 @@ with open(filename, 'w') as f:
     f.write(f"$Elements\n")
     f.write(f"{len(mesh.Elements2D())}\n")
     elements = str(mesh.Elements2D()).split("\n")
-    j = 0
+    j = 1
     separator = " "
     for el in mesh.Elements2D():
         f.write(f"{j} {len(el.vertices)} {separator.join(map(str, el.vertices))}\n")
