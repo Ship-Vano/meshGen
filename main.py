@@ -23,7 +23,7 @@ geo.Append(["line", p4, p1])  # Left edge
 
 # Generate the mesh
 print("Starting to generate mesh...")
-maxh = 0.006  # Maximum element size
+maxh = 0.009  # Maximum element size
 mesh = geo.GenerateMesh(maxh=maxh)
 mesh.dim = 2
 
