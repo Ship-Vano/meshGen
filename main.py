@@ -4,16 +4,21 @@ from netgen.meshing import Mesh, FaceDescriptor
 # Define the geometry of a square domain [-3, 3] x [-3, 3]
 geo = geom2d.SplineGeometry()
 
+Brio = True
 # Define points for the square boundary
-# p1 = geo.AppendPoint(-3.0, -3.0)  # Bottom-left
-# p2 = geo.AppendPoint(3.0, -3.0)   # Bottom-right
-# p3 = geo.AppendPoint(3.0, 3.0)    # Top-right
-# p4 = geo.AppendPoint(-3.0, 3.0)   # Top-left
-
-p1 = geo.AppendPoint(0.0, 0.0)  # Bottom-left
-p2 = geo.AppendPoint(1.0, 0.0)   # Bottom-right
-p3 = geo.AppendPoint(1.0, 0.01)    # Top-right
-p4 = geo.AppendPoint(0.0, 0.01)   # Top-left
+p1 = geo.AppendPoint(-3.0, -3.0)  # Bottom-left
+p2 = geo.AppendPoint(3.0, -3.0)   # Bottom-right
+p3 = geo.AppendPoint(3.0, 3.0)    # Top-right
+p4 = geo.AppendPoint(-3.0, 3.0)   # Top-left
+refinement_steps = 3  # Number of refinement steps
+maxh = 0.2
+if Brio:
+    p1 = geo.AppendPoint(0.0, 0.0)  # Bottom-left
+    p2 = geo.AppendPoint(1.0, 0.0)   # Bottom-right
+    p3 = geo.AppendPoint(1.0, 0.01)    # Top-right
+    p4 = geo.AppendPoint(0.0, 0.01)   # Top-left
+    maxh = 0.02  # Maximum element size
+    refinement_steps = 5  # Number of refinement steps
 
 # Add boundary edges
 geo.Append(["line", p1, p2])  # Bottom edge
@@ -23,7 +28,7 @@ geo.Append(["line", p4, p1])  # Left edge
 
 # Generate the mesh
 print("Starting to generate mesh...")
-maxh = 0.009  # Maximum element size
+
 mesh = geo.GenerateMesh(maxh=maxh)
 mesh.dim = 2
 
@@ -37,7 +42,7 @@ for boundary_edge in mesh.Elements1D():
     boundary_edge.index = 1  # Assign boundary condition index for these edges
 
 # Apply mesh refinement for better quality
-refinement_steps = 3  # Number of refinement steps
+
 for _ in range(refinement_steps):
     mesh.Refine()
 
