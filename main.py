@@ -21,34 +21,34 @@ if Brio:
     refinement_steps = 10  # Number of refinement steps
 
 # Add boundary edges
-geo.Append(["line", p1, p2])  # Bottom edge
-geo.Append(["line", p2, p3])  # Right edge
-geo.Append(["line", p3, p4])  # Top edge
-geo.Append(["line", p4, p1])  # Left edge
+geo.Append(["line", p1, p2], bc="bottom")  # Bottom edge
+geo.Append(["line", p2, p3], bc="right")  # Right edge
+geo.Append(["line", p3, p4], bc="top")  # Top edge
+geo.Append(["line", p4, p1], bc="left")  # Left edge
 
 # Generate the mesh
 print("Starting to generate mesh...")
 
-ng_params = MeshingParameters(maxh=maxh, closeedges = True,delaunay2d = False,optsteps2d = 1000,elsizeweight = 0.3, segmentsperedge=4)
+ng_params = MeshingParameters(maxh=maxh, closeedges = True, optimize=True, delaunay2d = False, optsteps2d = 1000,elsizeweight = 0.3, segmentsperedge=10)
 
 mesh = geo.GenerateMesh(ng_params)
 mesh.dim = 2
 
 # Add material descriptor
-mesh.Add(FaceDescriptor(surfnr=1, domin=1, bc=1))
-mesh.SetMaterial(1, "mat")
-
-# Assign boundary conditions manually
-for boundary_edge in mesh.Elements1D():
-    vertices = boundary_edge.vertices
-    boundary_edge.index = 1  # Assign boundary condition index for these edges
+# mesh.Add(FaceDescriptor(surfnr=1, domin=1, bc=1))
+# mesh.SetMaterial(1, "mat")
+#
+# # Assign boundary conditions manually
+# for boundary_edge in mesh.Elements1D():
+#     vertices = boundary_edge.vertices
+#     boundary_edge.index = 1  # Assign boundary condition index for these edges
 
 # Apply mesh refinement for better quality
 
-#mesh.Refine()
+mesh.Refine()
 # mesh.OptimizeMesh2d()
 # for _ in range(refinement_steps):
-#     mesh.OptimizeMesh2d()
+mesh.OptimizeMesh2d()
 
 
 # Export the mesh to a file
