@@ -1,5 +1,5 @@
 import netgen.geom2d as geom2d
-from netgen.meshing import Mesh, FaceDescriptor
+from netgen.meshing import Mesh, FaceDescriptor, MeshingParameters
 
 # Define the geometry of a square domain [-3, 3] x [-3, 3]
 geo = geom2d.SplineGeometry()
@@ -10,15 +10,15 @@ p1 = geo.AppendPoint(-3.0, -3.0)  # Bottom-left
 p2 = geo.AppendPoint(3.0, -3.0)   # Bottom-right
 p3 = geo.AppendPoint(3.0, 3.0)    # Top-right
 p4 = geo.AppendPoint(-3.0, 3.0)   # Top-left
-refinement_steps = 3  # Number of refinement steps
+refinement_steps = 5  # Number of refinement steps
 maxh = 0.2
 if Brio:
     p1 = geo.AppendPoint(0.0, 0.0)  # Bottom-left
     p2 = geo.AppendPoint(1.0, 0.0)   # Bottom-right
-    p3 = geo.AppendPoint(1.0, 0.01)    # Top-right
-    p4 = geo.AppendPoint(0.0, 0.01)   # Top-left
-    maxh = 0.02  # Maximum element size
-    refinement_steps = 5  # Number of refinement steps
+    p3 = geo.AppendPoint(1.0, 0.1)    # Top-right
+    p4 = geo.AppendPoint(0.0, 0.1)   # Top-left
+    maxh = 0.009  # Maximum element size
+    refinement_steps = 10  # Number of refinement steps
 
 # Add boundary edges
 geo.Append(["line", p1, p2])  # Bottom edge
@@ -29,7 +29,9 @@ geo.Append(["line", p4, p1])  # Left edge
 # Generate the mesh
 print("Starting to generate mesh...")
 
-mesh = geo.GenerateMesh(maxh=maxh)
+ng_params = MeshingParameters(maxh=maxh, closeedges = True,delaunay2d = False,optsteps2d = 1000,elsizeweight = 0.3, segmentsperedge=4)
+
+mesh = geo.GenerateMesh(ng_params)
 mesh.dim = 2
 
 # Add material descriptor
@@ -43,8 +45,11 @@ for boundary_edge in mesh.Elements1D():
 
 # Apply mesh refinement for better quality
 
-for _ in range(refinement_steps):
-    mesh.Refine()
+#mesh.Refine()
+# mesh.OptimizeMesh2d()
+# for _ in range(refinement_steps):
+#     mesh.OptimizeMesh2d()
+
 
 # Export the mesh to a file
 filename = "mesh.txt"
