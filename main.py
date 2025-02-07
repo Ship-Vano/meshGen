@@ -45,10 +45,14 @@ mesh.dim = 2
 
 # Apply mesh refinement for better quality
 
+for el in mesh.Elements2D():
+    if len([edge for edge in mesh.GetEdges(el) if mesh.GetBC(edge) != 0]) >= 2:
+        mesh.DeleteElement(el)
+mesh.Compress()
 mesh.Refine()
 # mesh.OptimizeMesh2d()
 # for _ in range(refinement_steps):
-mesh.OptimizeMesh2d()
+mesh.OptimizeMesh2d(ng_params)
 
 
 # Export the mesh to a file
