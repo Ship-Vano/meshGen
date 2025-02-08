@@ -4,7 +4,7 @@ import numpy as np
 gmsh.initialize()
 
 # Set global mesh size (optional)
-lc = 1e-2
+lc = 3e-3
 gmsh.option.setNumber("Mesh.CharacteristicLengthMin", lc)
 gmsh.option.setNumber("Mesh.CharacteristicLengthMax", lc)
 
