@@ -51,7 +51,7 @@ mesh.OptimizeMesh2d(ng_params)
 
 
 # Export the mesh to a file
-filename = "mesh.txt"
+filename = "meshBrio.txt"
 with open(filename, 'w') as f:
     # Export nodes
     f.write("$Nodes\n")

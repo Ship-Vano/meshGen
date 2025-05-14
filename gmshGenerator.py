@@ -1,13 +1,14 @@
 import gmsh
 import numpy as np
-from math import sqrt
+from math import sqrt, cos, sin, pi
+
 gmsh.initialize()
 
 # Set global mesh size (optional)
 
 
 
-taskType = 1
+taskType = 9
 lc = 1e-3
 # Create geometry
 if taskType == 1:
@@ -40,7 +41,9 @@ elif taskType == 2:
     gmsh.model.geo.add_plane_surface([face1])
 
 elif taskType == 4:
-    lc = 6e-3
+    N = 400
+    lc = 2 / (N * sqrt(3))
+    print(f"lc = {lc}")
     point1 = gmsh.model.geo.add_point(0.0, 0.0, 0.0, lc)
     point2 = gmsh.model.geo.add_point(1.0, 0.0, 0.0, lc)
     point3 = gmsh.model.geo.add_point(1.0, 1.0, 0.0, lc)
@@ -53,8 +56,65 @@ elif taskType == 4:
     face1 = gmsh.model.geo.add_curve_loop([line1, line2, line3, line4])
     gmsh.model.geo.add_plane_surface([face1])
 
+elif taskType == 5:
+    N = 200
+    lc = 2 / (N * sqrt(3))
+    print(f"lc = {lc}")
+    point1 = gmsh.model.geo.add_point(0.0, 0.0, 0.0, lc)
+    point2 = gmsh.model.geo.add_point(1.0, 0.0, 0.0, lc)
+    point3 = gmsh.model.geo.add_point(1.0, 1.0, 0.0, lc)
+    point4 = gmsh.model.geo.add_point(0.0, 1.0, 0.0, lc)
+    line1 = gmsh.model.geo.add_line(point1, point2)
+    line2 = gmsh.model.geo.add_line(point2, point3)
+    line3 = gmsh.model.geo.add_line(point3, point4)
+    line4 = gmsh.model.geo.add_line(point4, point1)
+    gmsh.model.geo.add_curve_loop([line1, line2, line3, line4])
+    face1 = gmsh.model.geo.add_curve_loop([line1, line2, line3, line4])
+    gmsh.model.geo.add_plane_surface([face1])
+
+###The Circular Polarized Alfven Wave Test
+elif taskType == 8:
+    N = 256
+    lc = 2 / (N * sqrt(3))
+    alpha = pi / 6
+    x_max = 1/cos(alpha)
+    y_max = 1/sin(alpha)
+    print(f"lc = {lc}")
+    point1 = gmsh.model.geo.add_point(0.0, 0.0, 0.0, lc)
+    point2 = gmsh.model.geo.add_point(x_max, 0.0, 0.0, lc)
+    point3 = gmsh.model.geo.add_point(x_max, y_max, 0.0, lc)
+    point4 = gmsh.model.geo.add_point(0.0, y_max, 0.0, lc)
+    line1 = gmsh.model.geo.add_line(point1, point2)
+    line2 = gmsh.model.geo.add_line(point2, point3)
+    line3 = gmsh.model.geo.add_line(point3, point4)
+    line4 = gmsh.model.geo.add_line(point4, point1)
+    gmsh.model.geo.add_curve_loop([line1, line2, line3, line4])
+    face1 = gmsh.model.geo.add_curve_loop([line1, line2, line3, line4])
+    gmsh.model.geo.add_plane_surface([face1])
+
+elif taskType == 9:
+    N = 100
+    lc = 2 / (N * sqrt(3))
+    alpha = pi / 3
+    x_min = -1.0
+    x_max = 1.0
+    y_min = -0.5#-1.0/(2.0 * cos(alpha))
+    y_max = 0.5#1.0/(2.0 * cos(alpha))
+    print(f"lc = {lc}, y_max = {y_max}, y_min = {y_min}")
+    point1 = gmsh.model.geo.add_point(x_min, y_min, 0.0, lc)
+    point2 = gmsh.model.geo.add_point(x_max, y_min, 0.0, lc)
+    point3 = gmsh.model.geo.add_point(x_max, y_max, 0.0, lc)
+    point4 = gmsh.model.geo.add_point(x_min, y_max, 0.0, lc)
+    line1 = gmsh.model.geo.add_line(point1, point2)
+    line2 = gmsh.model.geo.add_line(point2, point3)
+    line3 = gmsh.model.geo.add_line(point3, point4)
+    line4 = gmsh.model.geo.add_line(point4, point1)
+    gmsh.model.geo.add_curve_loop([line1, line2, line3, line4])
+    face1 = gmsh.model.geo.add_curve_loop([line1, line2, line3, line4])
+    gmsh.model.geo.add_plane_surface([face1])
+
 gmsh.option.setNumber("Mesh.CharacteristicLengthMin", lc*0.01)
-gmsh.option.setNumber("Mesh.CharacteristicLengthMax", lc+0.0001)
+gmsh.option.setNumber("Mesh.CharacteristicLengthMax", lc)
 
 
 
@@ -83,7 +143,7 @@ elem_tags, elem_node_tags = gmsh.model.mesh.getElementsByType(2)
 elem_node_tags = list(zip(*[iter(elem_node_tags)] * 3))  # Safe grouping
 
 # Export to .txt
-filename = "meshBrio.txt"
+filename = f"mesh{taskType}.txt"
 with open(filename, "w") as f:
     # Write nodes
     f.write("$Nodes\n")
