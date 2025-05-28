@@ -149,7 +149,7 @@ with open(filename, "w") as f:
     f.write("$Nodes\n")
     f.write(f"{len(node_tags)}\n")
     for tag, (x, y, z) in zip(node_tags, coords):
-        f.write(f"{node_indices[tag]} {x:.6f} {y:.6f} 0.0\n")  # Force z=0.0 for 2D
+        f.write(f"{node_indices[tag]} {x:.16f} {y:.16f} 0.0\n")  # Force z=0.0 for 2D
     f.write("$EndNodes\n")
 
     # Write elements
