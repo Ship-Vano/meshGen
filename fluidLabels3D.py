@@ -1,4 +1,139 @@
 import os
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.colors import LightSource
+
+# Параметры корыта
+L = 1.0
+BEACH_X = 0.2
+BEACH_Z = 0.1
+
+
+def sqr(x):
+    return x * x
+
+# Функция высоты дна (батиметрия)
+def bathymetry(x, z):
+    """Возвращает высоту дна в точке (x, z)"""
+    if x < 1.5 * BEACH_X:
+        if z < 1.5 * BEACH_X:
+            return (10.0/9.0) * (sqr(x - 1.5*BEACH_X) + sqr(z - 1.5*BEACH_X)) - BEACH_Z
+        elif z < L - 1.5*BEACH_X:
+            return (10.0/9.0) * sqr(x - 1.5*BEACH_X) - BEACH_Z
+        else:  # z >= L - 1.5*BEACH_X
+            return (10.0/9.0) * (sqr(x - 1.5*BEACH_X) + sqr(z - (L-1.5*BEACH_X))) - BEACH_Z
+    elif x < L - 1.5*BEACH_X:
+        if z < 1.5*BEACH_X:
+            return (10.0/9.0) * sqr(z - 1.5*BEACH_X) - BEACH_Z
+        elif z < L - 1.5*BEACH_X:
+            return -BEACH_Z
+        else:  # z >= L - 1.5*BEACH_X
+            return (10.0/9.0) * sqr(z - (L-1.5*BEACH_X)) - BEACH_Z
+    else:  # x >= L - 1.5*BEACH_X
+        if z < 1.5*BEACH_X:
+            return (10.0/9.0) * (sqr(x - (L-1.5*BEACH_X)) + sqr(z - 1.5*BEACH_X)) - BEACH_Z
+        elif z < L - 1.5*BEACH_X:
+            return (10.0/9.0) * sqr(x - (L-1.5*BEACH_X)) - BEACH_Z
+        else:  # z >= L - 1.5*BEACH_X
+            return (10.0/9.0) * (sqr(x - (L-1.5*BEACH_X)) + sqr(z - (L-1.5*BEACH_X))) - BEACH_Z
+
+
+# Генерация твердого тела (корыто + стенки)
+def generate_solid_bathymetry_3d(path,
+                                 width=160,  # x (ширина)
+                                 height=100,  # y (высота)
+                                 depth=80,  # z (глубина)
+                                 wall_thickness=4,
+                                 floor_thickness=2):
+    """
+    Генерирует 3D твердое тело с корытообразным дном
+    Оси: x (ширина), y (высота), z (глубина)
+    """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    max_height = 0.5  # Максимальная высота области
+
+    with open(path, 'w') as f:
+        f.write(f"S {width} {height} {depth}\n")
+        # Чтение в основном коде: k от depth-1 до 0, j от height-1 до 0, i от width-1 до 0
+        # Поэтому записываем в обратном порядке
+        for k in range(depth - 1, -1, -1):  # z (глубина)
+            for j in range(height - 1, -1, -1):  # y (высота)
+                for i in range(width - 1, -1, -1):  # x (ширина)
+                    # Физические координаты
+                    x_phys = L * i / (width - 1)
+                    z_phys = L * k / (depth - 1)
+                    y_phys = max_height * j / (height - 1)
+
+                    # Высота дна в этой точке (смещаем так, чтобы min=0)
+                    bottom_y = bathymetry(x_phys, z_phys) + BEACH_Z
+
+                    # Проверка на стенки
+                    in_wall = (i < wall_thickness or i >= width - wall_thickness or
+                               k < wall_thickness or k >= depth - wall_thickness)
+
+                    # Проверка на дно (все, что ниже или на уровне дна)
+                    in_bottom = y_phys <= bottom_y
+
+                    is_solid = in_wall or in_bottom
+                    phi = -1.0 if is_solid else 1.0
+                    f.write(f"{phi:.6f} ")
+                f.write("\n")
+
+
+# Генерация жидкости в корыте
+# Генерация жидкости с гауссианом (нормальное распределение)
+def generate_fluid_gaussian_3d(path,
+                               width=160,
+                               height=100,
+                               depth=80,
+                               wall_thickness=4,
+                               base_level=0.2,  # Базовый уровень воды
+                               amplitude=0.1,  # Амплитуда гауссиана
+                               center_x=0.5,  # Центр гауссиана по X (0.0-1.0)
+                               center_z=0.5,  # Центр гауссиана по Z (0.0-1.0)
+                               sigma=0.1):  # Стандартное отклонение
+    """
+    Генерирует 3D жидкость с гауссианом (нормальным распределением)
+    """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    max_height = 0.5
+
+    with open(path, 'w') as f:
+        f.write(f"F {width} {height} {depth}\n")
+        # Запись в обратном порядке
+        for k in range(depth - 1, -1, -1):  # z (глубина)
+            for j in range(height - 1, -1, -1):  # y (высота)
+                for i in range(width - 1, -1, -1):  # x (ширина)
+                    # Физические координаты
+                    x_phys = L * i / (width - 1)
+                    z_phys = L * k / (depth - 1)
+                    y_phys = max_height * j / (height - 1)
+
+                    # Высота дна в этой точке (смещаем так, чтобы min=0)
+                    bottom_y = bathymetry(x_phys, z_phys) + BEACH_Z
+
+                    # Проверка на стенки
+                    in_wall = (i < wall_thickness or i >= width - wall_thickness or
+                               k < wall_thickness or k >= depth - wall_thickness)
+
+                    # Вычисление гауссиана
+                    dx = (x_phys - center_x * L)
+                    dz = (z_phys - center_z * L)
+                    gaussian = amplitude * math.exp(-(dx * dx + dz * dz) / (2 * sigma * sigma))
+
+                    # Локальный уровень воды
+                    water_level = base_level + gaussian
+
+                    # Проверка на жидкость (над дном и под уровнем воды)
+                    above_bottom = y_phys > bottom_y
+                    below_water = y_phys <= water_level
+
+                    is_fluid = not in_wall and above_bottom and below_water
+                    phi = -1.0 if is_fluid else 1.0
+                    f.write(f"{phi:.6f} ")
+                f.write("\n")
 
 
 # Генерация твёрдой ванны (3D)
@@ -139,9 +274,79 @@ def generate_combined_labels_3d(solid_path, fluid_path, output_path):
                 f_out.write(" ")
 
 
+# Генерация теста с корытом
+# Генерация теста с гауссианом
+def generate_gaussian_test(width=160, height=100, depth=80,
+                           base_level=0.2, amplitude=0.1,
+                           center_x=0.5, center_z=0.5, sigma=0.15):
+    """
+    Генерирует тест с гауссиановым распределением воды
+    """
+    # Создаем директории
+    os.makedirs('res', exist_ok=True)
+
+    # Генерация solid
+    generate_solid_bathymetry_3d('res/solid_bathymetry.txt', width, height, depth)
+
+    # Генерация fluid с гауссианом
+    generate_fluid_gaussian_3d('res/fluid_gaussian.txt', width, height, depth,
+                               base_level=base_level, amplitude=amplitude,
+                               center_x=center_x, center_z=center_z, sigma=sigma)
+
+    # Комбинированные метки
+    generate_combined_labels_3d('res/solid_bathymetry.txt',
+                                'res/fluid_gaussian.txt',
+                                'res/labels_gaussian.txt')
+
 # Пример генерации тестов
 def generate_3d_tests():
-    w, h, d = 50, 50, 50
+    w, h, d = 35, 35, 35
+
+    # Тест с гауссианом в центре
+    generate_gaussian_test(
+        width=75,
+        height=75,
+        depth=25,
+        base_level=0.02,
+        amplitude=0.19,
+        center_x=0.5,
+        center_z=0.5,
+        sigma=0.15
+    )
+    # Визуализируем предварительную геометрию
+    visualize_bathymetry(
+        width=75,
+        depth=25,
+        base_level=0.04,
+        amplitude=0.11,
+        center_x=0.5,
+        center_z=0.5,
+        sigma=0.15,
+        # save_path='res/bathymetry_visualization.png'
+    )
+    # # Тест с гауссианом смещенным к краю
+    # generate_gaussian_test(
+    #     width=160,
+    #     height=100,
+    #     depth=80,
+    #     base_level=0.15,
+    #     amplitude=0.2,
+    #     center_x=0.3,
+    #     center_z=0.7,
+    #     sigma=0.12
+    # )
+    #
+    # # Тест с широким гауссианом
+    # generate_gaussian_test(
+    #     width=160,
+    #     height=100,
+    #     depth=80,
+    #     base_level=0.1,
+    #     amplitude=0.25,
+    #     center_x=0.5,
+    #     center_z=0.5,
+    #     sigma=0.25
+    # )
 
     # Солид-ванна
     generate_solid_3d_init('res/solid_3d_init.txt', w, h, d)
@@ -174,6 +379,86 @@ def generate_3d_tests():
     generate_combined_labels_3d('res/solid_3d_init.txt',
                                 'res/fluid_3d_sphere.txt',
                                 'res/labels_3d_sphere.txt')
+
+
+# Визуализация батиметрии и поверхности воды
+
+# Визуализация с осью Y, направленной вверх
+def visualize_bathymetry(width=160, depth=80, base_level=0.2, amplitude=0.1,
+                         center_x=0.5, center_z=0.5, sigma=0.15, save_path=None):
+    """
+    Визуализирует 3D-поверхности с осью Y, направленной вверх
+    """
+    # Создаем сетку координат
+    x = np.linspace(0, L, width)
+    z = np.linspace(0, L, depth)
+    X, Z = np.meshgrid(x, z)
+
+    # Рассчитываем высоту дна и уровень воды
+    Bottom = np.zeros_like(X)
+    for i in range(width):
+        for j in range(depth):
+            Bottom[j, i] = bathymetry(x[i], z[j]) + BEACH_Z
+
+    dx = X - center_x * L
+    dz = Z - center_z * L
+    Gaussian = amplitude * np.exp(-(dx ** 2 + dz ** 2) / (2 * sigma ** 2))
+    Water = base_level + Gaussian
+
+    # Создаем 3D-график с правильной ориентацией осей
+    fig = plt.figure(figsize=(14, 10))
+
+    # 1. 3D-визуализация с осью Y вверх
+    ax1 = fig.add_subplot(121, projection='3d')
+
+    # Поверхность дна (переворачиваем Z для правильной ориентации)
+    surf_bottom = ax1.plot_surface(X, Z, Bottom, cmap='terrain',
+                                   alpha=0.8, antialiased=True)
+
+    # Поверхность воды
+    surf_water = ax1.plot_surface(X, Z, Water, color='blue',
+                                  alpha=0.3, label='Water surface')
+
+    # Настройки осей и вида
+    ax1.set_xlabel('X')
+    ax1.set_ylabel('Z')
+    ax1.set_zlabel('Y (Height)', labelpad=15)
+    ax1.set_title('3D Bathymetry and Water Surface\n(Y-axis points up)')
+    ax1.view_init(elev=30, azim=-45)  # Угол обзора
+    ax1.zaxis.set_rotate_label(False)  # Фиксируем метку оси Z
+    # ax1.invert_zaxis()  # Инвертируем ось Z (Y), чтобы направление было вверх
+
+    # 2. 2D-вид сверху с правильной ориентацией
+    ax2 = fig.add_subplot(122)
+
+    # Визуализация батиметрии с освещением
+    ls = LightSource(azdeg=315, altdeg=45)
+    rgb = ls.shade(Bottom, cmap=plt.cm.terrain, vert_exag=0.1, blend_mode='soft')
+
+    # Отображаем батиметрию (инвертируем ось Y)
+    extent = [0, L, 0, L]  # [xmin, xmax, ymin, ymax] - инвертируем Y
+    im = ax2.imshow(Bottom, cmap='terrain', extent=extent,
+                    origin='upper', alpha=0.8)  # origin='upper' для правильной ориентации
+
+    # Контуры уровня воды (инвертируем ось Y)
+    levels = np.linspace(Water.min(), Water.max(), 10)
+    cs = ax2.contour(X, Z, Water, levels=levels, colors='blue', linewidths=1.5)
+
+    # Настройки графика
+    ax2.set_xlabel('X')
+    ax2.set_ylabel('Z')
+    ax2.set_title('2D Bathymetry Map with Water Contours\n(Y-axis points up)')
+    plt.colorbar(im, ax=ax2, label='Bottom Height')
+    plt.clabel(cs, inline=True, fontsize=9, fmt='%1.2f')
+
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, dpi=300)
+        print(f"Визуализация сохранена в {save_path}")
+    else:
+        plt.show()
 
 
 generate_3d_tests()

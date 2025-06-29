@@ -50,7 +50,7 @@ def plot_simple_labels(filepath):
 # Пример использования:
 generate_combined_labels_simple(
     'res/solid_init.txt',
-    'res/fluid_init_column.txt',
+    'res/fluid_init_ball.txt',
     'res/labels_simple.txt'
 )
 plot_simple_labels('res/labels_simple.txt')

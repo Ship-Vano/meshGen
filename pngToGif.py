@@ -64,7 +64,7 @@ import glob
 import sys
 from PIL import Image
 
-fp_in = "/home/ivan/MHDresults/Sod's problem (cylindrical)/rhoANdP.0*.png"
+fp_in = "/home/ivan/CLionProjects/FLuidGPU/InputData/testFluidSphere.0*.png"
 fp_out = "anim.gif"
 
 filepaths = sorted(glob.glob(fp_in))
