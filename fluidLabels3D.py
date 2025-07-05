@@ -300,30 +300,40 @@ def generate_gaussian_test(width=160, height=100, depth=80,
 
 # Пример генерации тестов
 def generate_3d_tests():
-    w, h, d = 35, 35, 35
+    w, h, d = 35, 50, 35
 
     # Тест с гауссианом в центре
+    # generate_gaussian_test(
+    #     width=75,
+    #     height=75,
+    #     depth=25,
+    #     base_level=0.02,
+    #     amplitude=0.19,
+    #     center_x=0.5,
+    #     center_z=0.5,
+    #     sigma=0.15
+    # )
     generate_gaussian_test(
-        width=75,
-        height=75,
-        depth=25,
-        base_level=0.02,
-        amplitude=0.19,
+        width=50,
+        height=50,
+        depth=50,
+        base_level=0.08,
+        amplitude=0.0,
         center_x=0.5,
         center_z=0.5,
-        sigma=0.15
+        sigma=0.1
     )
     # Визуализируем предварительную геометрию
-    visualize_bathymetry(
-        width=75,
-        depth=25,
-        base_level=0.04,
-        amplitude=0.11,
-        center_x=0.5,
-        center_z=0.5,
-        sigma=0.15,
-        # save_path='res/bathymetry_visualization.png'
-    )
+    # visualize_bathymetry(
+    #     width=50,
+    #     depth=50,
+    #     base_level=0.08,
+    #     amplitude=0.0,
+    #     center_x=0.5,
+    #     center_z=0.5,
+    #     sigma=0.15,
+    #     # save_path='res/bathymetry_visualization.png'
+    # )
     # # Тест с гауссианом смещенным к краю
     # generate_gaussian_test(
     #     width=160,
@@ -353,7 +363,7 @@ def generate_3d_tests():
 
     # Прямоугольный слой
     generate_fluid_rectangle_3d_init('res/fluid_3d_rect.txt', w, h, d,
-                                     fill_height_frac=0.3)
+                                     fill_height_frac=0.1)
 
     # Узкий столб
     generate_fluid_rectangle_3d_init('res/fluid_3d_column.txt', w, h, d,
